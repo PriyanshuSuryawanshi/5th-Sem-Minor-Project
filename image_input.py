@@ -18,39 +18,13 @@ def getFaceBox(faceNet, frame):
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 1)
     return frame, faceBoxes
 
-faceProto = "opencv_face_detector.pbtxt"
-faceModel = "opencv_face_detector_uint8.pb"
-
-ageProto = "age_deploy.prototxt"
-ageModel = "age_net.caffemodel"
-
-genderProto = "gender_deploy.prototxt"
-genderModel = "gender_net.caffemodel"
-
-faceNet = cv2.dnn.readNet(faceModel, faceProto)
-ageNet = cv2.dnn.readNet(ageModel, ageProto)
-genderNet = cv2.dnn.readNet(genderModel, genderProto)
-
-MODEL_MEAN_VALUES = (78.4263377603, 87.7689143744, 114.895847746)
-ageList = ['(0-2)', '(4-6)', '(8-12)', '(15-20)', '(25-32)', '(38-43)', '(48-53)', '(60-100)']
-genderList = ['Male', 'Female']
-
-video = cv2.VideoCapture(0)
-
-padding = 20
-
-while True:
-    hasFrame, vidFrame = video.read()
-
-    if not hasFrame:
-        cv2.waitKey(1)
-        break
-
-    vidFrame = cv2.flip(vidFrame, 1)
-    frame, faceBoxes = getFaceBox(faceNet, vidFrame)
+def process_image(image_path):
+    frame = cv2.imread(image_path)
+    frame, faceBoxes = getFaceBox(faceNet, frame)
 
     if not faceBoxes:
-        print("No face detected")
+        print("No face detected in the provided image")
+        return None
 
     for faceBox in faceBoxes:
         face = frame[max(0, faceBox[1] - padding):min(faceBox[3] + padding, frame.shape[0] - 1),
@@ -72,9 +46,33 @@ while True:
                     (0, 255, 255), 2, cv2.LINE_AA)
         cv2.putText(frame, labelAge, (faceBox[0], faceBox[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                     (0, 255, 255), 2, cv2.LINE_AA)
-    cv2.imshow("Age-Gender Detector", frame)
-    if cv2.waitKey(1) == ord('q'):
-        break
 
-video.release()
-cv2.destroyAllWindows()
+    return frame
+
+if __name__ == "__main__":
+    faceProto = "opencv_face_detector.pbtxt"
+    faceModel = "opencv_face_detector_uint8.pb"
+
+    ageProto = "age_deploy.prototxt"
+    ageModel = "age_net.caffemodel"
+
+    genderProto = "gender_deploy.prototxt"
+    genderModel = "gender_net.caffemodel"
+
+    faceNet = cv2.dnn.readNet(faceModel, faceProto)
+    ageNet = cv2.dnn.readNet(ageModel, ageProto)
+    genderNet = cv2.dnn.readNet(genderModel, genderProto)
+
+    MODEL_MEAN_VALUES = (78.4263377603, 87.7689143744, 114.895847746)
+    ageList = ['(0-2)', '(4-6)', '(8-12)', '(15-20)', '(25-32)', '(38-43)', '(48-53)', '(60-100)']
+    genderList = ['Male', 'Female']
+
+    padding = 20
+
+    image_path = "D:\\Minor Project\\Sem 5\\age-gender-detector-python\\Input img\\img4.jpg" 
+    result_image = process_image(image_path)
+
+    if result_image is not None:
+        cv2.imshow("Processed Image", result_image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
